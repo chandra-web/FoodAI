@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - DATABASE_URL=postgresql://foodai:secret@db:5432/foodaidb
+      - FOODAI_API_KEY=${API_SECRET:-default-dev-key}
+      - PORT=8000
+    depends_on:
+      - db
+      
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=foodai
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=foodaidb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+      - PORT=3000
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
